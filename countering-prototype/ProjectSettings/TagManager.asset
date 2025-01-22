@@ -5,6 +5,8 @@ TagManager:
   serializedVersion: 2
   tags:
   - Launcher
+  - Progress Bar Launcher Image
+  - Progress Bar Launcher Text
   layers:
   - Default
   - TransparentFX

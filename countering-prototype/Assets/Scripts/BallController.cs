@@ -2,20 +2,29 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq.Expressions;
 using UnityEngine;
+using UnityEngine.UI; // Required when Using UI elements.
 
 public class BallController : MonoBehaviour
 {
-    [SerializeField] private float force = 20.0f;
+    [SerializeField] private float force = 200.0f;
+    private Image circleImage;
+    private Text circleText;
+    public float time = 1f;
     private GameObject launcher;
     private bool isLaunchable = false;
     private bool launcherIsOnCooldown = false;
     private float cooldownTime = 2.0f;
     private float zConstraint = 10.0f;
+    private float forceMinRange;
+    private float forceMaxRange = 400.0f;
     // Start is called before the first frame update
     void Start()
     {
         launcher = GameObject.FindWithTag("Launcher");
+        circleImage = GameObject.FindWithTag("Progress Bar Launcher Image").GetComponent<Image>();
+        circleText = GameObject.FindWithTag("Progress Bar Launcher Text").GetComponent<Text>();;
         transform.position = new Vector3(transform.position.x, transform.position.y, zConstraint);
+        forceMinRange = force;
     }
 
     // Update is called once per frame
@@ -24,6 +33,16 @@ public class BallController : MonoBehaviour
         // if (Input.GetKey(KeyCode.Space)){
         //     // Debug.Log("Launcher is building energy");
         // }
+        if(!Mathf.Approximately(time, Time.timeScale)){
+            Time.timeScale = time;
+        }
+        // for(int i=0; i<280; i++){
+        //     Thread.Sleep(1000);
+        // }
+        if(Input.GetKeyDown(KeyCode.Space)){
+            force = forceMinRange;
+            StartCoroutine(BuildingForce());
+        }
         if(Input.GetKeyUp(KeyCode.Space) && isLaunchable && !launcherIsOnCooldown){
             // // Calculate Angle Between the collision point and the player
             // Vector3 dir = collision.contacts[0].point - transform.position;
@@ -31,10 +50,12 @@ public class BallController : MonoBehaviour
             // dir = -dir.normalized;
             // // And finally we add force in the direction of dir and multiply it by force. 
             // // This will push back the player
-            Vector3 dir = launcher.transform.right;
-            GetComponent<Rigidbody>().AddForce(new Vector3(-1, launcher.transform.rotation.y / 90, 0) * force, ForceMode.Impulse);
+            Debug.Log("launcher.transform.localEulerAngles.y = " + launcher.transform.localEulerAngles.y);
+            GetComponent<Rigidbody>().AddForce(new Vector3(-1, launcher.transform.localEulerAngles.y / 90, 0) * force, ForceMode.Impulse);
             isLaunchable = false;
             launcherIsOnCooldown = true;
+            circleImage.fillAmount = 0;
+            circleText.text = 0 + " %";
             StartCoroutine(LauncherCooldown(cooldownTime));
             Debug.Log("Force applied");
         }
@@ -57,6 +78,20 @@ public class BallController : MonoBehaviour
         yield return new WaitForSeconds(seconds);
         launcherIsOnCooldown = false;
         Debug.Log("End of Cooldown");
+
+    }
+
+    private IEnumerator BuildingForce()
+    {
+        float forceAdd = 1.0f;
+        float fillAmountAdd = forceAdd / (forceMaxRange - forceMinRange);
+        
+        while(force < forceMaxRange && isLaunchable){
+            circleImage.fillAmount += fillAmountAdd;
+            circleText.text = Mathf.RoundToInt(circleImage.fillAmount * 100) + " %";
+            force += forceAdd;
+            yield return new WaitForSeconds(0.01f);
+        }
 
     }
 }
