@@ -20,14 +20,21 @@ public class BallController : MonoBehaviour
     private float forceMinRange;
     private float forceMaxRange = 400.0f;
     private bool destroyState = false;
+    private bool isBuildingForce = false;
+    private float forceAdd;
+    private float fillAmountAdd;
     // Start is called before the first frame update
     void Start()
     {
         launcher = GameObject.FindWithTag("Launcher");
         circleImage = GameObject.FindWithTag("Progress Bar Launcher Image").GetComponent<Image>();
-        circleText = GameObject.FindWithTag("Progress Bar Launcher Text").GetComponent<Text>();;
+        circleText = GameObject.FindWithTag("Progress Bar Launcher Text").GetComponent<Text>();
+        circleImage.fillAmount = 0;
+        circleText.text = 0 + " %";
         transform.position = new Vector3(transform.position.x, transform.position.y, zConstraint);
         forceMinRange = force;
+        forceAdd = 1.0f;
+        fillAmountAdd = forceAdd / (forceMaxRange - forceMinRange);
     }
 
     // Update is called once per frame
@@ -37,17 +44,24 @@ public class BallController : MonoBehaviour
         if(Input.GetKeyDown(KeyCode.Space)){
             launcherAudioSource.Play();
             force = forceMinRange;
-            StartCoroutine(BuildingForce());
+            SetIsBuildingForce(true);
         }
         if(Input.GetKeyUp(KeyCode.Space) && isLaunchable && !launcherIsOnCooldown){
             Debug.Log("launcher.transform.localEulerAngles.y = " + launcher.transform.localEulerAngles.y);
             GetComponent<Rigidbody>().AddForce(new Vector3(-1, launcher.transform.localEulerAngles.y / 90, 0) * force, ForceMode.Impulse);
             isLaunchable = false;
             launcherIsOnCooldown = true;
+            SetIsBuildingForce(false);
             StartCoroutine(LauncherCooldown(cooldownTime));
             Debug.Log("Force applied");
         }
         
+    }
+
+    void FixedUpdate(){
+        if(GetIsBuildingForce()){
+            BallBuildsForce();
+        }
     }
 
     private void OnCollisionEnter(Collision collision)
@@ -70,20 +84,26 @@ public class BallController : MonoBehaviour
 
     }
 
-    private IEnumerator BuildingForce()
-    {
-        float forceAdd = 1.0f;
-        float fillAmountAdd = forceAdd / (forceMaxRange - forceMinRange);
-            
-        circleImage.fillAmount = 0;
-        circleText.text = 0 + " %";
-        while(force < forceMaxRange && isLaunchable){
+    private void BallBuildsForce()
+    {       
+        if(force < forceMaxRange && isLaunchable){
             circleImage.fillAmount += fillAmountAdd;
             circleText.text = Mathf.RoundToInt(circleImage.fillAmount * 100) + " %";
             force += forceAdd;
-            yield return new WaitForSeconds(0.01f);
         }
+    }
 
+    private void SetIsBuildingForce(bool value){
+        if(value){
+            circleImage.fillAmount = 0;
+            circleText.text = 0 + " %";
+            force = forceMinRange;
+        }
+        isBuildingForce = value;
+    }
+
+    private bool GetIsBuildingForce(){
+        return isBuildingForce;
     }
 
     public void DestroyBall(){
