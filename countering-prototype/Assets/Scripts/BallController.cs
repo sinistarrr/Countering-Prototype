@@ -19,6 +19,7 @@ public class BallController : MonoBehaviour
     private float zConstraint = 10.0f;
     private float forceMinRange;
     private float forceMaxRange = 400.0f;
+    private bool destroyState = false;
     // Start is called before the first frame update
     void Start()
     {
@@ -84,4 +85,14 @@ public class BallController : MonoBehaviour
         }
 
     }
+
+    public void DestroyBall(){
+        destroyState = true;
+    }
+
+    public bool GetDestroyState(){
+        return destroyState;
+    }
+
+
 }
