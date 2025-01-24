@@ -7,9 +7,11 @@ using UnityEngine.UI; // Required when Using UI elements.
 public class BallController : MonoBehaviour
 {
     [SerializeField] private float force = 200.0f;
+    [SerializeField] private List<AudioClip> audioClips;
+    [SerializeField] private AudioSource ballAudioSource;
+    [SerializeField] private AudioSource launcherAudioSource;
     private Image circleImage;
     private Text circleText;
-    public float time = 1f;
     private GameObject launcher;
     private bool isLaunchable = false;
     private bool launcherIsOnCooldown = false;
@@ -30,40 +32,26 @@ public class BallController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        // if (Input.GetKey(KeyCode.Space)){
-        //     // Debug.Log("Launcher is building energy");
-        // }
-        if(!Mathf.Approximately(time, Time.timeScale)){
-            Time.timeScale = time;
-        }
-        // for(int i=0; i<280; i++){
-        //     Thread.Sleep(1000);
-        // }
+
         if(Input.GetKeyDown(KeyCode.Space)){
+            launcherAudioSource.Play();
             force = forceMinRange;
             StartCoroutine(BuildingForce());
         }
         if(Input.GetKeyUp(KeyCode.Space) && isLaunchable && !launcherIsOnCooldown){
-            // // Calculate Angle Between the collision point and the player
-            // Vector3 dir = collision.contacts[0].point - transform.position;
-            // // We then get the opposite (-Vector3) and normalize it
-            // dir = -dir.normalized;
-            // // And finally we add force in the direction of dir and multiply it by force. 
-            // // This will push back the player
             Debug.Log("launcher.transform.localEulerAngles.y = " + launcher.transform.localEulerAngles.y);
             GetComponent<Rigidbody>().AddForce(new Vector3(-1, launcher.transform.localEulerAngles.y / 90, 0) * force, ForceMode.Impulse);
             isLaunchable = false;
             launcherIsOnCooldown = true;
-            circleImage.fillAmount = 0;
-            circleText.text = 0 + " %";
             StartCoroutine(LauncherCooldown(cooldownTime));
             Debug.Log("Force applied");
         }
         
     }
 
-    void OnCollisionEnter(Collision collision)
+    private void OnCollisionEnter(Collision collision)
     {
+        ballAudioSource.PlayOneShot(audioClips[Random.Range(0, audioClips.Count)], 0.1f);
         if (collision.gameObject.CompareTag("Launcher") && !isLaunchable)
         {
             Debug.Log("Collision Detected, launchable value updated");
@@ -85,7 +73,9 @@ public class BallController : MonoBehaviour
     {
         float forceAdd = 1.0f;
         float fillAmountAdd = forceAdd / (forceMaxRange - forceMinRange);
-        
+            
+        circleImage.fillAmount = 0;
+        circleText.text = 0 + " %";
         while(force < forceMaxRange && isLaunchable){
             circleImage.fillAmount += fillAmountAdd;
             circleText.text = Mathf.RoundToInt(circleImage.fillAmount * 100) + " %";

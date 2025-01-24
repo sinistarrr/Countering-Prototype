@@ -7,6 +7,7 @@ TagManager:
   - Launcher
   - Progress Bar Launcher Image
   - Progress Bar Launcher Text
+  - Ball
   layers:
   - Default
   - TransparentFX
